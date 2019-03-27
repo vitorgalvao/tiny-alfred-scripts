@@ -1,0 +1,104 @@
+#!/bin/bash
+
+readonly program="$(basename "${0}")"
+
+function depends_on {
+  local dep="${1}"
+
+  if ! command -v "${dep}" &> /dev/null; then
+    echo -e >&2 "\n$(tput setaf 1)This script requires ${dep}. Please install it first.$(tput sgr0)\n"
+    exit 1
+  fi
+}
+
+function trash {
+  # Due to a JXA bug (rdar://42477993), deleting more than one path at once fails if at least one of them is a directory.
+  # To go around it, here we delete all files, followed by each directory
+
+  /usr/bin/osascript -l JavaScript -e "
+    function run(argv) {
+      const SystemEvents = Application('System Events')
+      paths = argv.map(p => Path(p))
+      let files = []
+      let dirs = []
+
+      paths.forEach(p => { SystemEvents.aliases.byName(p.toString()).typeIdentifier() == 'public.folder' ?  dirs.push(p) : files.push(p) })
+
+      Application('Finder').delete(files)
+      dirs.forEach(p => Application('Finder').delete(p))
+  }" "${@}"
+}
+
+function usage {
+  echo "
+    Usage:
+      ${program} run
+
+    The single argument 'run' is necessary to prevent running the script by mistake.
+
+    Options:
+      -h, --help   Show this help.
+  " | sed -E 's/^ {4}//'
+}
+
+if [[ "${1}" =~ ^(-h|--help)$ ]]; then
+  usage
+  exit 0
+fi
+
+if [[ "${1}" != 'run' ]]; then
+  usage
+  exit 1
+fi
+
+depends_on 'alfred-workflow-update'
+
+echo 'Grabbing `setup_notificator`…'
+readonly notificator_script="$(mktemp -d)/setup_notificator"
+readonly notificator_url='https://raw.githubusercontent.com/vitorgalvao/notificator/master/setup_notificator'
+
+if [[ "$(curl --silent --head --write-out '%{http_code}' "${notificator_url}" --output '/dev/null')" == '200' ]]; then
+  curl --silent "${notificator_url}" --output "${notificator_script}"
+  chmod +x "${notificator_script}"
+else
+  echo "Could not find script at ${notificator_url}" >&2
+  exit 1
+fi
+
+# Get Workflows directory
+readonly sync_dir_pref="$(defaults read com.runningwithcrayons.Alfred-Preferences-3 'syncfolder' 2>/dev/null | sed "s|^~|${HOME}|")"
+[[ -n "${sync_dir_pref}" ]] && readonly sync_dir="${sync_dir_pref}" || readonly sync_dir="${HOME}/Library/Application Support/Alfred 3"
+readonly workflows_dir="${sync_dir}/Alfred.alfredpreferences/workflows"
+
+echo "Running in ${workflows_dir}…"
+
+IFS=$'\n'
+while read -r notificator_app; do
+  cd "$(dirname "${notificator_app}")" || return 1
+
+  if [[ "$(/usr/libexec/PlistBuddy -c 'print createdby' info.plist)" != 'Vítor Galvão' ]]; then
+    echo 'Not at the root of one of my Workflows (does not have my name in `Created By`). Skipping…'
+    continue
+  fi
+
+  workflow_name="$(/usr/libexec/PlistBuddy -c 'print name' info.plist)"
+  workflow_version="$(/usr/libexec/PlistBuddy -c 'print version' info.plist)"
+  workflow_bundleid="$(/usr/libexec/PlistBuddy -c 'print bundleid' info.plist)"
+
+  echo -n "Updating Notificator in ${workflow_name}…"
+  new_notificator_app="$(mktemp -d)/Notificator.app"
+  "${notificator_script}" --icon "${notificator_app}/Contents/Resources/applet.icns" --bundle-id "${workflow_bundleid}" --output-dir "$(dirname "${new_notificator_app}")"
+
+  if [[ "$(md5 -q "${notificator_app}")" == "$(md5 -q "${new_notificator_app}")" ]]; then
+    echo ' No need to update. Skipping…'
+    continue
+  fi
+
+  trash "${notificator_app}"
+  mv "${new_notificator_app}" "${notificator_app}"
+
+  echo ' Bumping minor version number and commiting…'
+  new_version="${workflow_version%.*}.$(bc <<< "${workflow_version##*.} + 1")"
+  /usr/libexec/PlistBuddy -c "set version ${new_version}" info.plist
+  alfred-workflow-update 'Updated Notificator'
+done < <(find "${workflows_dir}" -name 'Notificator.app')

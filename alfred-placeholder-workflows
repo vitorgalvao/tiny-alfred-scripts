@@ -1,0 +1,64 @@
+#!/bin/bash
+
+readonly program="$(basename "${0}")"
+readonly workflows_local_repo="${HOME}/Dropbox/Work/Personal/Code/alfred-workflows"
+
+function usage {
+  echo "
+    Usage:
+      ${program} run
+
+    The single argument 'run' is necessary to prevent running the script by mistake.
+
+    Options:
+      -h, --help   Show this help.
+  " | sed -E 's/^ {4}//'
+}
+
+if [[ "${1}" =~ ^(-h|--help)$ ]]; then
+  usage
+  exit 0
+fi
+
+if [[ "${1}" != 'run' ]]; then
+  usage
+  exit 1
+fi
+
+if [[ ! -d "${workflows_local_repo}" ]]; then
+  echo "It seems '${workflows_local_repo}' does not exist. You have to set it as the local repository to update workflows." >&2
+  exit 1
+fi
+
+readonly plist_placeholder_dir="$(mktemp -d)"
+readonly plist_placeholder="${plist_placeholder_dir}/info.plist"
+readonly online_plist_placeholder='https://raw.githubusercontent.com/vitorgalvao/tiny-alfred-scripts/master/packal_placeholder.plist'
+
+if ! curl --output "${plist_placeholder}" --silent --fail "${online_plist_placeholder}"; then
+  echo "It seems '${online_plist_placeholder}' does not exist. It is required as the basis of the fake placeholders" >&2
+  exit 1
+fi
+
+readonly fake_workflows_dir="$(mktemp -d)"
+
+for workflow in "${workflows_local_repo}"/*; do
+  [[ -d "${workflow}" ]] || continue # Skip non-Workflows (non-directories)
+  [[ "${workflow}" == *'_helpers' ]] && continue # Skip _helpers directory
+
+  workflow_name="$(basename "${workflow}")"
+  workflow_name_lowercase="$(tr '[:upper:]' '[:lower:]' <<< "${workflow_name}")"
+
+  cp -r "${plist_placeholder_dir}" "${fake_workflows_dir}/${workflow_name}"
+  cp "${workflow}/source/icon.png" "${fake_workflows_dir}/${workflow_name}"
+
+  sed -i '' "s/IDFAKE/com.vitorgalvao.alfred.${workflow_name_lowercase}/" "${fake_workflows_dir}/${workflow_name}/info.plist"
+  sed -i '' "s/FAKE/${workflow_name}/" "${fake_workflows_dir}/${workflow_name}/info.plist"
+  DITTONORSRC=1 ditto -ck "${fake_workflows_dir}/${workflow_name}" "${fake_workflows_dir}/${workflow_name}.alfredworkflow"
+done
+
+if command -v 'trash' &> /dev/null; then
+  # If 'trash' is available, delete otherwise lingering directories
+  find "${fake_workflows_dir}" -type d -mindepth 1 -print0 | xargs -0 trash -F
+fi
+
+open "${fake_workflows_dir}"

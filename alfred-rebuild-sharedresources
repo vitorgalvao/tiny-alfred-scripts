@@ -1,0 +1,85 @@
+#!/bin/bash
+
+readonly program="$(basename "${0}")"
+
+function depends_on {
+  local dep="${1}"
+
+  if ! command -v "${dep}" &> /dev/null; then
+    echo -e >&2 "\n$(tput setaf 1)This script requires ${dep}. Please install it first.$(tput sgr0)\n"
+    exit 1
+  fi
+}
+
+function usage {
+  echo "
+    Usage:
+      ${program} run
+
+    The single argument 'run' is necessary to prevent running the script by mistake.
+
+    Options:
+      -h, --help   Show this help.
+  " | sed -E 's/^ {4}//'
+}
+
+if [[ "${1}" =~ ^(-h|--help)$ ]]; then
+  usage
+  exit 0
+fi
+
+if [[ "${1}" != 'run' ]]; then
+  usage
+  exit 1
+fi
+
+depends_on 'alfred-workflow-update'
+
+echo 'Grabbing latest `_sharedresources…`'
+readonly sharedresources_script="$(mktemp -d)/_sharedresources"
+readonly sharedresources_url='https://raw.githubusercontent.com/vitorgalvao/alfred-workflows/master/_helpers/_sharedresources'
+
+if [[ "$(curl --silent --head --write-out '%{http_code}' "${sharedresources_url}" --output '/dev/null')" == '200' ]]; then
+  curl --silent "${sharedresources_url}" --output "${sharedresources_script}"
+  chmod +x "${sharedresources_script}"
+else
+  echo "Could not find script at ${sharedresources_url}" >&2
+  exit 1
+fi
+
+readonly sharedresources_md5="$(md5 -q "${sharedresources_script}")"
+
+# Get Workflows directory
+readonly sync_dir_pref="$(defaults read com.runningwithcrayons.Alfred-Preferences-3 'syncfolder' 2>/dev/null | sed "s|^~|${HOME}|")"
+[[ -n "${sync_dir_pref}" ]] && readonly sync_dir="${sync_dir_pref}" || readonly sync_dir="${HOME}/Library/Application Support/Alfred 3"
+readonly workflows_dir="${sync_dir}/Alfred.alfredpreferences/workflows"
+
+echo "Running in ${workflows_dir}…"
+
+IFS=$'\n'
+while read -r sharedresources_loc; do
+  cd "$(dirname "${sharedresources_loc}")" || return 1
+
+  if [[ "$(/usr/libexec/PlistBuddy -c 'print createdby' info.plist)" != 'Vítor Galvão' ]]; then
+    echo 'Not at the root of one of my Workflows (does not have my name in `Created By`). Skipping…'
+    continue
+  fi
+
+  workflow_name="$(/usr/libexec/PlistBuddy -c 'print name' info.plist)"
+  workflow_version="$(/usr/libexec/PlistBuddy -c 'print version' info.plist)"
+
+  new_version="${workflow_version%.*}.$(bc <<< "${workflow_version##*.} + 1")"
+
+  echo -n "Updating _sharedresources in ${workflow_name}…"
+
+  if [[ "${sharedresources_md5}" == "$(md5 -q "${sharedresources_loc}")" ]]; then
+    echo ' No need to update. Skipping…'
+    continue
+  fi
+
+  cp "${sharedresources_script}" "${sharedresources_loc}"
+
+  echo ' Bumping version and commiting to repo…'
+  /usr/libexec/PlistBuddy -c "set version ${new_version}" info.plist
+  alfred-workflow-update 'Updated _sharedresources'
+done < <(find "${workflows_dir}" -name '_sharedresources')
