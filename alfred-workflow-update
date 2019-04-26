@@ -1,7 +1,6 @@
 #!/bin/bash
 
 readonly program="$(basename "${0}")"
-readonly workflows_local_repo="${HOME}/Dropbox/Work/Personal/Code/alfred-workflows"
 readonly workflow_dir="$(pwd)"
 
 function trash {
@@ -27,10 +26,27 @@ function usage {
     Usage:
       ${program} <commit_message>
 
+      It is required to set the environment variable 'workflows_local_repo', with the path to the local development repository.
+
     Options:
       -h, --help   Show this help.
   " | sed -E 's/^ {4}//'
 }
+
+if [[ "${1}" =~ ^(-h|--help)$ ]]; then
+  usage
+  exit 0
+fi
+
+if [[ -z "${workflows_local_repo}" ]]; then
+  usage
+  exit 1
+fi
+
+if [[ "${#}" -ne 1 ]]; then
+  echo "As a single argument to script, give what you want as the commit message (the workflow’s name will be automatically prepended)." >&2
+  exit 1
+fi
 
 if [[ ! -d "${workflows_local_repo}" ]]; then
   echo "It seems '${workflows_local_repo}' does not exist. You have to set it as the local repository to update workflows." >&2
@@ -39,16 +55,6 @@ fi
 
 if [[ "${workflow_dir}" != *'Alfred.alfredpreferences/workflows/'* ]] || [[ ! -f "${workflow_dir}/info.plist" ]]; then
   echo "You need to be inside the workflow’s root directory in Alfred’s preferences directory." >&2
-  exit 1
-fi
-
-if [[ "${1}" =~ ^(-h|--help)$ ]]; then
-  usage
-  exit 0
-fi
-
-if [[ "${#}" -ne 1 ]]; then
-  echo "As a single argument to script, give what you want as the commit message (the workflow’s name will be automatically prepended)." >&2
   exit 1
 fi
 

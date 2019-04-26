@@ -1,7 +1,6 @@
 #!/bin/bash
 
 readonly program="$(basename "${0}")"
-readonly workflows_local_repo="${HOME}/Dropbox/Work/Personal/Code/alfred-workflows"
 
 function usage {
   echo "
@@ -9,6 +8,8 @@ function usage {
       ${program} run
 
     The single argument 'run' is necessary to prevent running the script by mistake.
+
+    It is required to set the environment variable 'workflows_local_repo', with the path to the local development repository.
 
     Options:
       -h, --help   Show this help.
@@ -20,7 +21,7 @@ if [[ "${1}" =~ ^(-h|--help)$ ]]; then
   exit 0
 fi
 
-if [[ "${1}" != 'run' ]]; then
+if [[ "${1}" != 'run' ]] || [[ -z "${workflows_local_repo}" ]]; then
   usage
   exit 1
 fi
