@@ -4,6 +4,8 @@ readonly program="$(basename "${0}")"
 
 function usage {
   echo "
+    Rename Alfred Workflows in the preferences directory after their name and bundle ID
+
     Usage:
       ${program} run
 

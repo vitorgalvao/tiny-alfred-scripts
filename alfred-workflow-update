@@ -23,6 +23,8 @@ function trash {
 
 function usage {
   echo "
+   Package and update a Workflow from the Workflows directory to the vitorgalvao/alfred-workflows github repo
+
     Usage:
       ${program} <commit_message>
 

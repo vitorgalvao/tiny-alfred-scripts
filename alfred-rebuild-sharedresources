@@ -13,6 +13,8 @@ function depends_on {
 
 function usage {
   echo "
+    Update _shared_resources in all Workflows with 'Vítor Galvão' as the creator
+
     Usage:
       ${program} run
 

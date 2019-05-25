@@ -31,6 +31,8 @@ function trash {
 
 function usage {
   echo "
+    Update Notificator in all Workflows with 'Vítor Galvão' as the creator
+
     Usage:
       ${program} run
 
