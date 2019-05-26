@@ -1,0 +1,55 @@
+#!/usr/bin/env ruby
+
+require 'cgi'
+require 'open3'
+require 'optparse'
+require 'tmpdir'
+
+workflow_path = ARGV[0]
+forum_thread = ARGV[1]
+
+# Options
+ARGV.push('--help') if ARGV.count < 2
+
+OptionParser.new do |opt|
+  opt.banner = <<~EOS
+    Add Workflow to the vitorgalvao/requested-alfred-workflows repo
+
+    Usage:
+      #{File.basename($PROGRAM_NAME)} <workflow_path> <forum_thread>
+  EOS
+end.parse!
+
+workflow_file = File.basename(workflow_path)
+workflow_name = File.basename(workflow_path, File.extname(workflow_path))
+workflow_file_escaped = CGI.escape(File.basename(workflow_file)).gsub('+', '%20')
+repo_dir = Dir.mktmpdir
+workflows_dir = File.join(repo_dir, 'Workflows')
+
+system('git', 'clone', 'https://github.com/vitorgalvao/requested-alfred-workflows.git', repo_dir)
+
+abort 'A Workflow with that name already exists.' if File.exist?(File.join(workflows_dir, workflow_file))
+
+File.rename(workflow_path, File.join(workflows_dir, workflow_file))
+workflows_list_file = File.join(repo_dir, 'README.md')
+workflows_list = File.read(workflows_list_file).split("\n").select { |line| line.start_with?('* ') }
+workflows_list_file_no_list = File.read(workflows_list_file).split("\n").reject { |line| line.start_with?('* ') }
+
+workflow_url = 'https://raw.githubusercontent.com/vitorgalvao/requested-alfred-workflows/master/Workflows/' + workflow_file_escaped
+workflow_line = '* ' + workflow_name + ': [download](' + workflow_url + ') | [forum thread](' + forum_thread + ')'
+
+File.write(
+  workflows_list_file,
+  (
+    workflows_list_file_no_list +
+    workflows_list.push(workflow_line).sort
+  ).join("\n") + "\n"
+)
+
+system('git', '-C', repo_dir, 'add', '.')
+system('git', '-C', repo_dir, 'commit', '--message', 'Add ' + workflow_name)
+system('git', '-C', repo_dir, 'push', 'origin', 'master')
+
+Open3.capture2('pbcopy', stdin_data: workflow_url)
+puts 'Copied to clipboard: ' + workflow_url
+puts 'Share on: ' + forum_thread

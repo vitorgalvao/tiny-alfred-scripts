@@ -2,6 +2,9 @@
 
 These are tailored to my specific needs are are unlikely to be of use to anyone else. I’m hosting them here for my convenience.
 
+### alfred-add-requested
+Script to add Workflow to the vitorgalvao/requested-alfred-workflows repo
+
 ### alfred-placeholder-workflows
 Script to create dummy Alfred Workflows that update to their real counterparts, to host on Packal
 
