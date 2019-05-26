@@ -68,9 +68,8 @@ else
 fi
 
 # Get Workflows directory
-readonly sync_dir_pref="$(defaults read com.runningwithcrayons.Alfred-Preferences-4 'syncfolder' 2>/dev/null | sed "s|^~|${HOME}|")"
-[[ -n "${sync_dir_pref}" ]] && readonly sync_dir="${sync_dir_pref}" || readonly sync_dir="${HOME}/Library/Application Support/Alfred"
-readonly workflows_dir="${sync_dir}/Alfred.alfredpreferences/workflows"
+readonly alfred_prefs="$(ruby -e 'require "json"; puts File.expand_path(JSON.parse(File.read(File.join(ENV["HOME"], "Library/Application Support/Alfred/prefs.json")))["current"])')"
+readonly workflows_dir="${alfred_prefs}/workflows"
 
 echo "Running in ${workflows_dir}…"
 
