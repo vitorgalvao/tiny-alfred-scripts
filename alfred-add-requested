@@ -51,5 +51,4 @@ system('git', '-C', repo_dir, 'commit', '--message', 'Add ' + workflow_name)
 system('git', '-C', repo_dir, 'push', 'origin', 'master')
 
 Open3.capture2('pbcopy', stdin_data: workflow_url)
-puts 'Copied to clipboard: ' + workflow_url
-puts 'Share on: ' + forum_thread
+puts "\n" + 'Copied to clipboard: ' + workflow_url + "\n" + 'Share on: ' + forum_thread
