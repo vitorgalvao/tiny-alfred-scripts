@@ -43,6 +43,19 @@ function usage {
   " | sed -E 's/^ {4}//'
 }
 
+function bump_version {
+  local -r old_version="${1}"
+  local -r old_year="$(cut -d'.' -f1 <<< "${old_version}")"
+  local -r old_release="$(cut -d'.' -f2 <<< "${old_version}")"
+  local -r new_year="$(date '+%Y')"
+
+  if [[ "${old_year}" -ne "${new_year}" ]]; then
+    echo -n "${new_year}.1"
+  else
+    echo -n "${new_year}.$(bc <<< "${old_release} + 1")"
+  fi
+}
+
 if [[ "${1}" =~ ^(-h|--help)$ ]]; then
   usage
   exit 0
@@ -99,7 +112,7 @@ while read -r notificator_app; do
   mv "${new_notificator_app}" "${notificator_app}"
 
   echo ' Bumping minor version number and commiting…'
-  new_version="${workflow_version%.*}.$(bc <<< "${workflow_version##*.} + 1")"
+  new_version="$(bump_version "${workflow_version}")"
   /usr/libexec/PlistBuddy -c "set version ${new_version}" info.plist
   alfred-workflow-update 'Updated Notificator'
 done < <(find "${workflows_dir}" -name 'Notificator.app')
