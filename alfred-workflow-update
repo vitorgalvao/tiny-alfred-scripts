@@ -98,6 +98,7 @@ fi
 
 DITTONORSRC=1 ditto -ck "${workflow_dir_to_package}" "${tmp_workflow_file}"
 
+mkdir -p "${workflows_local_repo}/${workflow_name}" # If Workflow does not exist in repo, create it by starting with the directory
 cd "${workflows_local_repo}/${workflow_name}" || exit 1
 trash "${workflow_file}" 'source'
 cp -R "${workflow_dir}" 'source'
