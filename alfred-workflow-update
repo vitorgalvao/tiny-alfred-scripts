@@ -76,7 +76,7 @@ fi
 readonly commit_message="${1}"
 readonly workflow_name="$(/usr/libexec/PlistBuddy -c 'print name' "${workflow_dir}/info.plist")"
 readonly workflow_readme="$(/usr/libexec/PlistBuddy -c 'print readme' "${workflow_dir}/info.plist")"
-readonly workflow_old_version="$(/usr/libexec/PlistBuddy -c 'print version' "${workflows_local_repo}/${workflow_name}/source/info.plist")"
+readonly workflow_old_version="$(/usr/libexec/PlistBuddy -c 'print version' "${workflow_dir}/info.plist")"
 readonly workflow_new_version="$(bump_version "${workflow_old_version}")"
 readonly workflow_file="${workflow_name}.alfredworkflow"
 readonly tmp_workflow_file="$(mktemp -d)/${workflow_file}"
