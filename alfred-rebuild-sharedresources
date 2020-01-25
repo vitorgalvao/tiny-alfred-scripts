@@ -29,7 +29,7 @@ function bump_version {
   local -r old_version="${1}"
   local -r old_year="$(cut -d'.' -f1 <<< "${old_version}")"
   local -r old_release="$(cut -d'.' -f2 <<< "${old_version}")"
-  local -r new_year="$(date '+%Y')"
+  local -r new_year="$(date '+%y')"
 
   if [[ "${old_year}" -ne "${new_year}" ]]; then
     echo -n "${new_year}.1"
