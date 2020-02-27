@@ -17,7 +17,14 @@ OptionParser.new do |opt|
 
     Usage:
       #{File.basename($PROGRAM_NAME)} <workflow_path> <forum_thread>
+
+    Options:
   EOS
+
+  opt.on('-h', '--help', 'Show this help.') do
+    puts opt
+    exit
+  end
 end.parse!
 
 workflow_file = File.basename(workflow_path)
