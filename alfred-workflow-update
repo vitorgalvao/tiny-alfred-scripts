@@ -86,7 +86,7 @@ readonly tmp_workflow_file="$(mktemp -d)/${workflow_file}"
 find "${workflow_dir}" -iname '.DS_Store' -delete
 
 # If there are Workflow Environment Variables with "Don't Export", make copy of workflow first and empty variables before packaging
-if /usr/libexec/PlistBuddy -c 'Print variablesdontexport' "${workflow_dir}/info.plist" &> /dev/null; then
+if /usr/libexec/PlistBuddy -c 'print variablesdontexport' "${workflow_dir}/info.plist" &> /dev/null; then
   readonly workflow_dir_to_package="$(mktemp -d)"
   cp -R "${workflow_dir}/"* "${workflow_dir_to_package}"
 
