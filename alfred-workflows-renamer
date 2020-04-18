@@ -36,7 +36,7 @@ if [[ "${1}" != 'run' ]]; then
 fi
 
 # Get Workflows directory
-readonly alfred_prefs="$(ruby -e 'require "json"; puts File.expand_path(JSON.parse(File.read(File.join(ENV["HOME"], "Library/Application Support/Alfred/prefs.json")))["current"])')"
+readonly alfred_prefs="$(ruby -r 'json' -e 'puts File.expand_path(JSON.parse(File.read(File.join(ENV["HOME"], "Library/Application Support/Alfred/prefs.json")))["current"])')"
 readonly workflows_dir="${alfred_prefs}/workflows"
 
 echo "Running in ${workflows_dir}…"
