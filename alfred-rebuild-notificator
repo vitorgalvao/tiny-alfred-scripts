@@ -107,7 +107,7 @@ while read -r notificator_app; do
 
   echo -n "Updating Notificator in ${workflow_name}…"
   new_notificator_app="$(mktemp -d)/Notificator.app"
-  "${notificator_script}" --icon "${notificator_app}/Contents/Resources/applet.icns" --bundle-id "${workflow_bundleid}" --output-dir "$(dirname "${new_notificator_app}")"
+  "${notificator_script}" --icon "${notificator_app}/Contents/Resources/applet.icns" --bundle-id "${workflow_bundleid}.notificator" --output-dir "$(dirname "${new_notificator_app}")"
 
   if [[ "$(md5 -q "${notificator_app}")" == "$(md5 -q "${new_notificator_app}")" ]]; then
     echo ' No need to update. Skipping…'
