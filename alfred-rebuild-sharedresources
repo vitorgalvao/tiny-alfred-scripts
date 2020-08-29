@@ -24,7 +24,7 @@ function usage {
     Usage:
       ${program} run
 
-    The single argument 'run' is necessary to prevent running the script by mistake.
+    The argument 'run' is necessary to prevent running the script by mistake.
 
     Options:
       -h, --help   Show this help.
