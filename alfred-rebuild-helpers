@@ -1,0 +1,108 @@
+#!/bin/bash
+
+readonly program="$(basename "${0}")"
+readonly helpers=('_sharedresources' 'downmedia-download') # Exact names of the helper scripts in vitorgalvao/alfred-workflows/_helpers
+
+function depends_on {
+  local -r all_deps=("${@}")
+  local missing_deps=()
+
+  for dep in "${all_deps[@]}"; do
+    command -v "${dep}" > /dev/null || missing_deps+=("${dep}")
+  done
+
+  if [[ "${#missing_deps[@]}" -gt 0 ]]; then
+    echo 'Missing required tools:' >&2
+    printf '  %s\n' "${missing_deps[@]}" >&2
+    exit 1
+  fi
+}
+
+function usage {
+  echo "
+    In all Workflows with 'Vítor Galvão' as the creator, update helpers:
+      $(printf "\n  %s" "${helpers[@]}")
+
+    Usage:
+      ${program} run
+
+    The argument 'run' is necessary to prevent running the script by mistake.
+
+    Options:
+      -h, --help   Show this help.
+  " | sed -E 's/^ {4}//'
+}
+
+function bump_version {
+  local -r old_version="${1}"
+  local -r old_year="$(cut -d'.' -f1 <<< "${old_version}")"
+  local -r old_release="$(cut -d'.' -f2 <<< "${old_version}")"
+  local -r new_year="$(date '+%y')"
+
+  if [[ "${old_year}" -ne "${new_year}" ]]; then
+    echo -n "${new_year}.1"
+  else
+    echo -n "${new_year}.$(bc <<< "${old_release} + 1")"
+  fi
+}
+
+if [[ "${1}" =~ ^(-h|--help)$ ]]; then
+  usage
+  exit 0
+fi
+
+if [[ "${1}" != 'run' ]]; then
+  usage
+  exit 1
+fi
+
+depends_on 'alfred-workflow-update'
+
+# Get Workflows directory
+readonly alfred_prefs="$(ruby -r 'json' -e 'puts File.expand_path(JSON.parse(File.read(File.join(ENV["HOME"], "Library/Application Support/Alfred/prefs.json")))["current"])')"
+readonly workflows_dir="${alfred_prefs}/workflows"
+echo "Running in ${workflows_dir}…"
+
+# Update helpers
+for helper in "${helpers[@]}"; do
+  echo "Grabbing latest ${helper}…"
+  helper_script="$(mktemp -d)/${helper}"
+  helper_url="https://raw.githubusercontent.com/vitorgalvao/alfred-workflows/master/_helpers/${helper}"
+
+  if [[ "$(curl --silent --head --write-out '%{http_code}' "${helper_url}" --output '/dev/null')" == '200' ]]; then
+    curl --silent "${helper_url}" --output "${helper_script}"
+    chmod +x "${helper_script}"
+  else
+    echo "Could not find script at ${helper_url}" >&2
+    exit 1
+  fi
+
+  helper_md5="$(md5 -q "${helper_script}")"
+
+  IFS=$'\n'
+  while read -r helper_loc; do
+    cd "$(dirname "${helper_loc}")" || return 1
+
+    workflow_name="$(/usr/libexec/PlistBuddy -c 'print name' info.plist)"
+    echo -n "Updating ${helper} in ${workflow_name}…"
+
+    if [[ "$(/usr/libexec/PlistBuddy -c 'print createdby' info.plist)" != 'Vítor Galvão' ]]; then
+      echo ' Not at the root of one of my Workflows (does not have my name in "Created By"). Skipping…'
+      continue
+    fi
+
+    workflow_version="$(/usr/libexec/PlistBuddy -c 'print version' info.plist)"
+    new_version="$(bump_version "${workflow_version}")"
+
+    if [[ "${helper_md5}" == "$(md5 -q "${helper_loc}")" ]]; then
+      echo ' No need to update. Skipping…'
+      continue
+    fi
+
+    cp "${helper_script}" "${helper_loc}"
+
+    echo ' Bumping version and commiting to repo…'
+    /usr/libexec/PlistBuddy -c "set version ${new_version}" info.plist
+    alfred-workflow-update "Updated ${helper}"
+  done < <(find "${workflows_dir}" -name "${helper}")
+done

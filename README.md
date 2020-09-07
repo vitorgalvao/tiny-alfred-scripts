@@ -11,8 +11,8 @@ Create dummy Alfred Workflows that update to their real counterparts, to host on
 ### alfred-rebuild-notificator
 Update [Notificator](https://github.com/vitorgalvao/notificator) in all Workflows with “Vítor Galvão” as the creator
 
-### alfred-rebuild-sharedresources
-Update [`_shared_resources`](https://github.com/vitorgalvao/alfred-workflows/tree/master/_helpers) in all Workflows with “Vítor Galvão” as the creator
+### alfred-rebuild-helpers
+Update [helpers](https://github.com/vitorgalvao/alfred-workflows/tree/master/_helpers) in all Workflows with “Vítor Galvão” as the creator
 
 ### alfred-workflow-update
 Package and update a Workflow from the Workflows directory to the vitorgalvao/alfred-workflows github repo
