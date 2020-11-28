@@ -23,7 +23,7 @@ function trash {
 
 function usage {
   echo "
-   Package and update a Workflow from the Workflows directory to the vitorgalvao/alfred-workflows github repo. If Workflow does not exist in repo, it will be created.
+   Package and update a Workflow to the vitorgalvao/alfred-workflows github repo. If Workflow does not exist in repo, it will be created.
 
     Usage:
       ${program} <commit_message>

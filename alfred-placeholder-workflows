@@ -4,7 +4,7 @@ readonly program="$(basename "${0}")"
 
 function usage {
   echo "
-    Create dummy Alfred Workflows that update to their real counterparts, to host on Packal
+    Create dummy Alfred Workflows which update to the real ones, to host on Packal
 
     Usage:
       ${program} run
