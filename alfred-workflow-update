@@ -98,7 +98,17 @@ fi
 
 DITTONORSRC=1 ditto -ck "${workflow_dir_to_package}" "${tmp_workflow_file}"
 
-[[ -d "${workflows_local_repo}/${workflow_name}" ]] && trash "${workflows_local_repo}/${workflow_name}"
+if [[ -d "${workflows_local_repo}/${workflow_name}" ]]; then
+  trash "${workflows_local_repo}/${workflow_name}"
+else
+  echo '
+
+    PREVIOUSLY WORKFLOW DIRECTORY NOT FOUND!
+    IF THIS IS A NEW WORKFLOW, DO NOT FORGET TO ADD TO README.
+
+  ' | sed -E 's/ {4}//'
+fi
+
 mkdir -p "${workflows_local_repo}/${workflow_name}"
 cd "${workflows_local_repo}/${workflow_name}" || exit 1
 cp -R "${workflow_dir}" 'source'
