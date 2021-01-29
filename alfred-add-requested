@@ -12,19 +12,12 @@ forum_thread = ARGV[1]
 ARGV.push('--help') if ARGV.count < 2
 
 OptionParser.new do |opt|
-  opt.banner = <<~EOS
+  opt.banner = <<~BANNER
     Add Workflow to the vitorgalvao/requested-alfred-workflows repo
 
     Usage:
       #{File.basename($PROGRAM_NAME)} <workflow_path> <forum_thread>
-
-    Options:
-  EOS
-
-  opt.on('-h', '--help', 'Show this help.') do
-    puts opt
-    exit 0
-  end
+  BANNER
 end.parse!
 
 workflow_file = File.basename(workflow_path)
