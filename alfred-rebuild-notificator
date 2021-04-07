@@ -109,7 +109,7 @@ while read -r notificator_app; do
   new_notificator_app="$(mktemp -d)/Notificator.app"
   "${notificator_script}" --icon 'icon.png' --bundle-id "${workflow_bundleid}.notificator" --output-dir "$(dirname "${new_notificator_app}")"
 
-  if [[ "$(md5 -q "${notificator_app}")" == "$(md5 -q "${new_notificator_app}")" ]]; then
+  if diff --brief --recursive "${notificator_app}" "${new_notificator_app}"; then
     echo ' No need to update. Skipping…'
     continue
   fi
