@@ -84,6 +84,8 @@ readonly tmp_workflow_file="$(mktemp -d)/${workflow_file}"
 /usr/libexec/PlistBuddy -c "set version ${workflow_new_version}" "${workflow_dir}/info.plist"
 
 find "${workflow_dir}" -iname '.DS_Store' -delete
+echo "Removing signature from Notificator.app…"
+find "${workflow_dir}" -name 'Notificator.app' -exec codesign --remove-signature {} \;
 
 # If there are Workflow Environment Variables with "Don't Export", make copy of workflow first and empty variables before packaging
 if /usr/libexec/PlistBuddy -c 'print variablesdontexport' "${workflow_dir}/info.plist" &> /dev/null; then
