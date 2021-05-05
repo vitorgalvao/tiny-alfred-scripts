@@ -3,6 +3,7 @@
 readonly program="$(basename "${0}")"
 readonly workflow_dir="$(pwd)"
 
+# Helpers
 function trash {
   # Due to a JXA bug (rdar://42477993), deleting more than one path at once fails if at least one of them is a directory.
   # To go around it, here we delete all files, followed by each directory
@@ -48,6 +49,7 @@ function bump_version {
   fi
 }
 
+# Checks
 if [[ "${1}" =~ ^(-h|--help)$ ]]; then
   usage
   exit 0
@@ -73,6 +75,7 @@ if [[ "${workflow_dir}" != *'Alfred.alfredpreferences/workflows/'* ]] || [[ ! -f
   exit 1
 fi
 
+# Setup
 readonly commit_message="${1}"
 readonly workflow_name="$(/usr/libexec/PlistBuddy -c 'print name' "${workflow_dir}/info.plist")"
 readonly workflow_readme="$(/usr/libexec/PlistBuddy -c 'print readme' "${workflow_dir}/info.plist")"
@@ -81,13 +84,18 @@ readonly workflow_new_version="$(bump_version "${workflow_old_version}")"
 readonly workflow_file="${workflow_name}.alfredworkflow"
 readonly tmp_workflow_file="$(mktemp -d)/${workflow_file}"
 
+echo "Updating version to ${workflow_new_version}…"
 /usr/libexec/PlistBuddy -c "set version ${workflow_new_version}" "${workflow_dir}/info.plist"
 
-find "${workflow_dir}" -iname '.DS_Store' -delete
+echo "Deleting .DS_Store files…"
+find "${workflow_dir}" -name '.DS_Store' -delete
+
 echo "Removing signature from Notificator.app…"
 find "${workflow_dir}" -name 'Notificator.app' -exec codesign --remove-signature {} \;
 
 # If there are Workflow Environment Variables with "Don't Export", make copy of workflow first and empty variables before packaging
+echo 'Cleaning variables…'
+
 if /usr/libexec/PlistBuddy -c 'print variablesdontexport' "${workflow_dir}/info.plist" &> /dev/null; then
   readonly workflow_dir_to_package="$(mktemp -d)"
   cp -R "${workflow_dir}/"* "${workflow_dir_to_package}"
@@ -98,6 +106,7 @@ else
   readonly workflow_dir_to_package="${workflow_dir}"
 fi
 
+echo 'Compressing…'
 DITTONORSRC=1 ditto -ck "${workflow_dir_to_package}" "${tmp_workflow_file}"
 
 if [[ -d "${workflows_local_repo}/${workflow_name}" ]]; then
