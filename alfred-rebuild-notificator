@@ -82,6 +82,7 @@ echo "Running in ${workflows_dir}…"
 IFS=$'\n'
 while read -r notificator_app; do
   cd "$(dirname "${notificator_app}")" || return 1
+  echo
 
   if [[ "$(/usr/libexec/PlistBuddy -c 'print createdby' info.plist)" != 'Vítor Galvão' ]]; then
     echo 'Not at the root of one of my Workflows (does not have my name in `Created By`). Skipping…'
@@ -96,7 +97,7 @@ while read -r notificator_app; do
   new_notificator_app="$(mktemp -d)/Notificator.app"
   "${notificator_script}" --icon 'icon.png' --bundle-id "${workflow_bundleid}.notificator" --output-dir "$(dirname "${new_notificator_app}")"
 
-  if diff --brief --recursive "${notificator_app}" "${new_notificator_app}"; then
+  if diff --brief --recursive "${notificator_app}" "${new_notificator_app}" > /dev/null; then
     echo ' No need to update. Skipping…'
     continue
   fi
@@ -104,5 +105,6 @@ while read -r notificator_app; do
   trash "${notificator_app}"
   mv "${new_notificator_app}" "${notificator_app}"
 
+  echo
   alfred-workflow-update 'Updated Notificator'
 done < <(find "${workflows_dir}" -name 'Notificator.app')
