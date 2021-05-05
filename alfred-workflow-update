@@ -129,10 +129,8 @@ echo "${workflow_readme}" > README.md
 echo -n 'Pushing to repository… '
 git add .
 git commit --all --message "${workflow_name}: ${commit_message}" --quiet
-if git push origin master --quiet; then
-  echo 'Pushed.'
-else
-  echo 'There was and error pushing to the repository.' >&2
+if ! git push origin master --quiet; then
+  echo 'There was and error pushing to the repository!' >&2
   exit 1
 fi
 
