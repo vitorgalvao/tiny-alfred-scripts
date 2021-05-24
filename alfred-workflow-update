@@ -115,9 +115,13 @@ else
   echo '
 
     PREVIOUSLY WORKFLOW DIRECTORY NOT FOUND!
-    IF THIS IS A NEW WORKFLOW, DO NOT FORGET TO ADD TO README.
+    IF THIS IS A NEW WORKFLOW, CONFIRM YOU WANT TO ADD IT
+    BY CREATING AN EMPTY DIRECTORY WITH ITS NAME IN THE REPOSITORY
+    THEN RERUN THE SCRIPT.
 
-  ' | sed -E 's/ {4}//'
+  ' | sed -E 's/ {4}//' >&2
+
+  exit 1
 fi
 
 mkdir -p "${workflows_local_repo}/${workflow_name}"
