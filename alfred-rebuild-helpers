@@ -52,6 +52,7 @@ echo "Running in ${workflows_dir}…"
 
 # Update helpers
 for helper in "${helpers[@]}"; do
+  echo
   echo "Grabbing latest ${helper}…"
   helper_script="$(mktemp -d)/${helper}"
   helper_url="https://raw.githubusercontent.com/vitorgalvao/alfred-workflows/master/_helpers/${helper}"
